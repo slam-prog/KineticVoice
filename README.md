@@ -1,3 +1,5 @@
+Copyright (c) 2026 [NAJIB MOHAMMED AL-AMIR] & Google LLC. All Rights Reserved.
+
 # 🪖 KineticVoice: Standalone Biomechanical Speech Hardware Platform
 ## منصة KineticVoice المستقلة لفك تشفير اللفظ وبث الإحداثيات الحركية
 
