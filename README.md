@@ -41,6 +41,17 @@ Copyright (c) 2026 [NAJIB MOHAMMED AL-AMIR] & Google LLC. All Rights Reserved.
 اطلع على ملف [Google AI Technical Evaluation](GOOGLE_AI_EVALUATION.md) للحصول على التفاصيل التقنية الدقيقة وتقييم الحوسبة الطرفية.
 
 ---
+## 🚀 Future Scalability & Miniaturization Roadmap / خارطة الطريق والتطوير المستقبلي
+
+* **English**: While the current MVP utilizes a face-stabilizing helmet frame to guarantee rigid mathematical origins `(0,0)`, the production roadmap targets a seamless transition into consumer-grade form factors:
+  1. **Smart Glasses Integration**: Embedding the 4-microphone array directly into the frames of smart augmented-reality (AR) glasses. Since eye-wear rests statically on the nasal bridge and ears, the geometric constraints required for TDOA remain locked, making it an ideal stealth input interface.
+  2. **Ultralight Smart Neckbands/Earsets**: Shifting the processing unit to ultra-miniaturized form factors like the *Seeed Studio XIAO BLE* embedded inside a flexible neck-collar, utilizing micro-MEMS transducers to decode physical vocal articulation discreetly.
+
+* **عربي**: على الرغم من أن النموذج الحالي (MVP) يعتمد على هيكل خوذة صلبة لضمان ثبات نقطة الأصل الرياضية والمصفوفة `(0,0)`، فإن خارطة الطريق الاستثمارية للمنصة تستهدف الانتقال بالمنتج هندسيًا إلى أحجام استهلاكية بالغة الصغر:
+  1. **الدمج في النظارات الذكية**: دمج مصفوفة الميكروفونات الرباعية مباشرة داخل إطارات النظارات الذكية ونظارات الواقع المعزز (AR). وبما أن النظارة تستقر بثبات فيزيائي على عظمة الأنف والأذنين، فإن أبعاد مصفوفة قياس فارق التوقيت (TDOA) تظل ثابتة ومحمية من الحيود الحركي، مما يجعلها واجهة مدخلات مخفية ومثالية للمستهلك العادي.
+  2. **السماعات والأطواق الذكية فائقة الخفة**: نقل وحدة المعالجة إلى معالجات متناهية الصغر (مثل رقاقات XIAO BLE) المدمجة داخل طوق رقبة مرن أو سماعة أذن، واستخدام أغشية صوتية دقيقة (MEMS) لفك تشفير ونطق الحروف حركيًا بشكل صامت وخفي تمامًا.
+
+
 ## 📄 License / التراخيص القانونية والمستند الحمائي
 
 * **English**: This platform is licensed under the **Mozilla Public License 2.0 (MPL 2.0)** (Co-Copyrighted by the Researcher & Google LLC). This permissive yet protective license ensures that the core firmware and hardware topologies remain open-source and cannot be monopolized into a competing closed product. However, it explicitly allows commercial entities to utilize and link `KineticVoice` as a **supportive/complementary interface** inside their proprietary applications and operating systems without triggering copyleft constraints on their own source code.
