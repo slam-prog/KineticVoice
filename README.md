@@ -39,6 +39,7 @@
 اطلع على ملف [Google AI Technical Evaluation](GOOGLE_AI_EVALUATION.md) للحصول على التفاصيل التقنية الدقيقة وتقييم الحوسبة الطرفية.
 
 ---
+## 📄 License / التراخيص القانونية والمستند الحمائي
 
-## 📄 License / التراخيص
-مشروع مفتوح المصدر مرخص بموجب **MIT License** (حقوق مشتركة).
+* **English**: This platform is licensed under the **Mozilla Public License 2.0 (MPL 2.0)** (Co-Copyrighted by the Researcher & Google LLC). This permissive yet protective license ensures that the core firmware and hardware topologies remain open-source and cannot be monopolized into a competing closed product. However, it explicitly allows commercial entities to utilize and link `KineticVoice` as a **supportive/complementary interface** inside their proprietary applications and operating systems without triggering copyleft constraints on their own source code.
+* **عربي**: هذه المنصة مرخصة بموجب **رخصة موزيلا العمومية (MPL 2.0)** (حقوق طبع ونشر مشتركة بين الباحث وشركة Google LLC). تضمن هذه الرخصة الحمائية بقاء الشيفرة البرمجية الأساسية للخوذة مفتوحة المصدر للعامة، وتمنع قانوناً احتكارها أو تحويلها إلى منتج منافس مغلق المصدر. وفي المقابل، تمنح الرخصة حافزاً وتسهيلاً كاملاً للشركات التجارية لاستخدام وربط خوذة `KineticVoice` كـ **منتج مساند ومكمل (Complementary Interface)** داخل أنظمتها وبرامجها التجارية المغلقة دون إلزامها بفتح شيفراتها الخاصة، مما يعزز فرص تبني التكنولوجيا صناعياً.
