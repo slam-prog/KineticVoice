@@ -1,8 +1,8 @@
 /**
  * @file kinetic_vocal_core.ino
- * @brief KineticVoice: Independent Wearable Hardware Platform via BLE.
- * @note Developed by Human Architect & Google AI. 
- * @version 2.0.0 (Standalone Hardware Release)
+ * @brief KineticVoice: Standalone Biomechanical Speech Hardware Platform.
+ * @author [اسمك الثلاثي بالإنجليزية] (Lead Architect) & Google AI (Computational Partner)
+ * @copyright Copyright (c) 2026 [NAJIB MOHAMMED AL-AMIR] & Google LLC. All Rights Reserved.
  */
 
 #include <ArduinoBLE.h>
