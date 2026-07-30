@@ -1,7 +1,7 @@
 /**
  * @file kinetic_vocal_core.ino
  * @brief KineticVoice: Standalone Biomechanical Speech Hardware Platform.
- * @author [اسمك الثلاثي بالإنجليزية] (Lead Architect) & Google AI (Computational Partner)
+ * @author [NAJIB MOHAMMED AL-AMIR] (Lead Architect) & Google AI (Computational Partner)
  * @copyright Copyright (c) 2026 [NAJIB MOHAMMED AL-AMIR] & Google LLC. All Rights Reserved.
  */
 
