@@ -1,0 +1,16 @@
+{
+  "ar": {
+    "language_name": "العربية",
+    "LABIAL_LIPS": "[ب، م، و، ف] (أحرف شفوية)",
+    "DENTAL_ALVEOLAR": "[د، ت، ن، ط، ز، س] (أحرف أسنانية/طرف اللسان)",
+    "PALATAL_MID_MOUTH": "[ج، ش، ي، ك] (أحرف وسط الفم/الحنك الأعلى)",
+    "PHARYNGEAL_THROAT": "[ع، ح، خ، غ، أ، هـ] (أحرف حلقية حنجرية)"
+  },
+  "en": {
+    "language_name": "English",
+    "LABIAL_LIPS": "[B, M, W, P, F] (Labial sounds)",
+    "DENTAL_ALVEOLAR": "[D, T, N, S, Z, L] (Dental/Alveolar sounds)",
+    "PALATAL_MID_MOUTH": "[J, SH, Y, CH, K] (Palatal/Mid-mouth sounds)",
+    "PHARYNGEAL_THROAT": "[H, G, KH, O, A] (Pharyngeal/Throat sounds)"
+  }
+}
