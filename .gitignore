@@ -1,0 +1,11 @@
+# Arduino build artifacts
+/build/
+/bin/
+*.html
+
+# Python temporary files
+__pycache__/
+*.pyc
+.env
+output_speech.txt
+transcribed_output.txt
