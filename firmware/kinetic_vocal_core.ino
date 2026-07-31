@@ -1,125 +1,132 @@
-
-
-/**
- * @file kinetic_vocal_core.ino
- * @brief KineticVoice: Standalone 3D Spatial Speech Hardware Platform.
+/*
+ * KineticVoice V3.1.0 Firmware
+ * Core Authors: [NAJIB MOHAMMED AL-AMIR] & Google LLC
  * 
- * @notice SCIENTIFIC INTEGRITY & SECURITY VERIFICATION / الأمانة العلمية وفحص الأمان
- * This core firmware was programmatically generated, optimized, and strictly audited 
- * against math overflows and floating-point drifts in deep collaboration with Google AI. 
- * Secure type-casting and mathematical radical protection bounds have been established 
- * to guarantee 100% runtime stability under continuous microsecond interrupt sampling.
- * 
- * تم مراجعة وتدقيق هذا الملف البرمجي بالكامل بالتعاون مع الذكاء الاصطناعي لـ Google. 
- * تم تحصين الشيفرة ضد ثغرات فيضان الذاكرة الرياضية وحظر حيود الجذور الفراغية للمحور Z، 
- * مما يضمن استقرار المنظومة بنسبة 100% دون انهيار أو توقف أثناء البث اللاسلكي المستمر.
- * 
- * @author Lead Architect: [NAJIB MOHAMMED AL-AMIR]
- * @author Computational Co-Developer: Google AI
- * @copyright Copyright (c) 2026 [NAJIB MOHAMMED AL-AMIR] & Google LLC. All Rights Reserved.
- * @version 3.1.0 (Ironclad Security & 3D Precision Core Update)
+ * ---------------------------------------------------------------------------
+ * Scientific Attribution & Acknowledgement:
+ * The Analog-Digital Hybrid architecture—where TDOA hardware-driven pulse 
+ * processing is offloaded to external conversion circuits—was structurally 
+ * optimized and contributed in collaboration with DeepSeek AI.
+ * The multi-dimensional Kalman filtering and cross-platform SDK layers are 
+ * also co-developed by DeepSeek AI.
+ * ---------------------------------------------------------------------------
  */
 
 #include <ArduinoBLE.h>
+#include <math.h>
 
-// 1. تحديد مواقع الميكروفونات الثابتة فراغياً بالمليمتر (Mic 3 هو المرجع 0,0,0)
-const double x3 = 0.0,   y3 = 0.0,   z3 = 0.0;   // M3: أسفل اليسار (المرجع الفراغي المطلق)
-const double x1 = 0.0,   y1 = 60.0,  z1 = 0.0;   // M1: أعلى اليسار
-const double x4 = 60.0,  y4 = 0.0,   z4 = 0.0;   // M4: أسفل اليمين
-const double x2 = 60.0,  y2 = 60.0,  z2 = 0.0;   // M2: أعلى اليمين
+BLEService kineticService("180F");
+BLEStringCharacteristic xyzCharacteristic("2A19", BLERead | BLENotify, 64);
 
-// 2. دبابيس المقاطعة السريعة المتصلة بالميكروفونات
-const int PIN_M1 = 2;   const int PIN_M2 = 3;
-const int PIN_M3 = 18;  const int PIN_M4 = 19;
+// أبعاد المصفوفة (ملم)
+const double d = 60.0;
+const double v_sound = 0.343; // ملم/مايكروثانية
 
-// طوابع زمنية ميكروثانية متطايرة ومحمية ضد الفيضان الرقمي
-volatile uint32_t t1 = 0, t2 = 0, t3 = 0, t4 = 0;
-const double SPEED_OF_SOUND = 0.343; // مم لكل مايكروثانية بدقة Double الثابتة
-const uint32_t DEBOUNCE_DELAY = 200000; // فترة الصمت لمنع صدى الصوت (200ms)
-uint32_t lastTriggerTime = 0;
+// متغيرات استقبال النبضات من الدارة الهجينة (يتم تعبئتها بواسطة المقاطعات)
+volatile uint32_t t1 = 0, t2 = 0, t4 = 0; // طوابع زمنية (مايكروثانية)
+volatile bool newData = false;
 
-// إعداد بروتوكول البلوتوث القياسي للبث اللاسلكي الفراغي الآمن
-BLEService kineticService("180F"); 
-BLEStringCharacteristic coordinateDataCharacteristic("2A19", BLERead | BLENotify, 64);
+// ================== فلتر كالمان ثلاثي الأبعاد (مساهمة DeepSeek) ==================
+// مصفوفات الحالة (3x3) مبسطة للسرعة على RP2040
+double P[3][3] = {{1,0,0},{0,1,0},{0,0,1}};
+double X[3] = {0,0,0}; // الحالة [x, y, z]
+const double Q = 0.022; // ضوضاء العملية
+const double R = 0.618; // ضوضاء القياس
+
+void kalmanFilter3D(double z[3]) {
+    // تحديث مصفوفة التغاير P
+    for (int i=0; i<3; i++) P[i][i] += Q;
+    
+    // حساب كسب كالمان (مبسط: قطري)
+    double K[3];
+    for (int i=0; i<3; i++) {
+        K[i] = P[i][i] / (P[i][i] + R);
+    }
+    
+    // تحديث الحالة
+    for (int i=0; i<3; i++) {
+        X[i] += K[i] * (z[i] - X[i]);
+        P[i][i] = (1 - K[i]) * P[i][i];
+    }
+}
+// ========================================================================
+
+// ================== محرك التثليث المحسّن (Google AI + DeepSeek) ==================
+bool computePosition(double dR1, double dR2, double dR4, double &x, double &y, double &z) {
+    // dR1 = r1 - r3, dR2 = r2 - r3, dR4 = r4 - r3 (قيم من العداد)
+    // باستخدام خوارزمية Chan المبسطة
+    double r3_est = sqrt(dR1*dR1 + dR2*dR2 + dR4*dR4) / 2.0; // تقدير أولي
+    
+    for (int iter=0; iter<5; iter++) {
+        double x_est = (d*d - dR4*dR4 - 2*dR4*r3_est) / (2*d);
+        double y_est = (d*d - dR1*dR1 - 2*dR1*r3_est) / (2*d);
+        double z_sq = r3_est*r3_est - x_est*x_est - y_est*y_est;
+        if (z_sq < 0) z_sq = 0;
+        double z_est = sqrt(z_sq);
+        
+        // إعادة تقدير r3 باستخدام المعادلة الثانية (لـ i=2)
+        double r3_new = (2*d*d - dR2*dR2 - 2*d*x_est - 2*d*y_est) / (2*dR2 + 0.001);
+        if (r3_new > 0) r3_est = (r3_est + r3_new) / 2.0;
+    }
+    
+    // الحل النهائي
+    x = (d*d - dR4*dR4 - 2*dR4*r3_est) / (2*d);
+    y = (d*d - dR1*dR1 - 2*dR1*r3_est) / (2*d);
+    double z_sq = r3_est*r3_est - x*x - y*y;
+    if (z_sq < 0) z_sq = 0;
+    z = sqrt(z_sq);
+    
+    return true;
+}
+// ========================================================================
+
+// ================== دوال المقاطعة (لقراءة النبضات من الدارة الهجينة) ==================
+void ISR_M1() { if (t1 == 0) { t1 = micros(); newData = true; } }
+void ISR_M2() { if (t2 == 0) { t2 = micros(); newData = true; } }
+void ISR_M4() { if (t4 == 0) { t4 = micros(); newData = true; } }
+// ========================================================================
 
 void setup() {
-  pinMode(PIN_M1, INPUT); pinMode(PIN_M2, INPUT);
-  pinMode(PIN_M3, INPUT); pinMode(PIN_M4, INPUT);
-  
-  // تفعيل المقاطعات اللحظية الصارمة عند صعود الموجة الصوتية
-  attachInterrupt(digitalPinToInterrupt(PIN_M1), ISR_M1, RISING);
-  attachInterrupt(digitalPinToInterrupt(PIN_M2), ISR_M2, RISING);
-  attachInterrupt(digitalPinToInterrupt(PIN_M3), ISR_M3, RISING);
-  attachInterrupt(digitalPinToInterrupt(PIN_M4), ISR_M4, RISING);
+    pinMode(2, INPUT); // نبضة TDOA من M1
+    pinMode(3, INPUT); // نبضة TDOA من M2
+    pinMode(4, INPUT); // نبضة TDOA من M4
 
-  if (!BLE.begin()) { while (1); } // حماية النظام في حال فشل بدء البلوتوث
+    attachInterrupt(digitalPinToInterrupt(2), ISR_M1, RISING);
+    attachInterrupt(digitalPinToInterrupt(3), ISR_M2, RISING);
+    attachInterrupt(digitalPinToInterrupt(4), ISR_M4, RISING);
 
-  // تهيئة وبث الهوية اللاسلكية المستقلة للخوذة
-  BLE.setLocalName("KineticVoiceCore");
-  BLE.setAdvertisedService(kineticService);
-  kineticService.addCharacteristic(coordinateDataCharacteristic);
-  BLE.addService(kineticService);
-  coordinateDataCharacteristic.writeValue("0.0,0.0,0.0,UNKNOWN"); 
-  BLE.advertise();
+    if (!BLE.begin()) { while(1); }
+    BLE.setLocalName("KineticVoiceCore");
+    BLE.setAdvertisedService(kineticService);
+    kineticService.addCharacteristic(xyzCharacteristic);
+    BLE.addService(kineticService);
+    BLE.advertise();
 }
 
 void loop() {
-  BLEDevice central = BLE.central();
+    BLEDevice central = BLE.central();
+    if (central && central.connected() && newData) {
+        noInterrupts();
+        uint32_t t1_local = t1, t2_local = t2, t4_local = t4;
+        t1 = t2 = t4 = 0;
+        newData = false;
+        interrupts();
 
-  // المعالجة وحساب المثلثات تفعل فقط عند الاقتران النشط لحفظ طاقة وعمر البطارية
-  if (central && central.connected()) {
-    if (t1 > 0 && t2 > 0 && t3 > 0 && t4 > 0) {
-      
-      // حماية صارمة لمنع التداخل (Type Casting Check) واختيار الصفر الزمني الحقيقي
-      uint32_t t_min = min(min((uint32_t)t1, (uint32_t)t2), min((uint32_t)t3, (uint32_t)t4));
-      lastTriggerTime = t_min; // تثبيت طابع آخر نبضة لمنع التكرار الصدائي
-      
-      // حساب مسافات التوقيت النسبية الفراغية (TDOA) بدقة Double المضاعفة
-      double r1 = (double)(t1 - t_min) * SPEED_OF_SOUND;
-      double r2 = (double)(t2 - t_min) * SPEED_OF_SOUND;
-      double r3 = (double)(t3 - t_min) * SPEED_OF_SOUND; // مسافة السحق المرجعية لـ M3
-      double r4 = (double)(t4 - t_min) * SPEED_OF_SOUND;
+        // حساب فروق المسافات (بالنسبة للميكروفون المرجعي M3 الذي نعتبره الصفر)
+        double dR1 = (double)(t1_local) * v_sound;
+        double dR2 = (double)(t2_local) * v_sound;
+        double dR4 = (double)(t4_local) * v_sound;
 
-      // محرك تقاطع الكرات الفراغي ثلاثي الأبعاد (Secure 3D Spherical Trilateration)
-      double A = 2.0 * x4;
-      double B = 2.0 * y1;
-      
-      // الحماية الوقائية القاطعة لمنع ثغرة القسمة على صفر في حال حيود المستشعرات
-      if (abs(A) > 0.00001 && abs(B) > 0.00001) {
-        double exactX = ((r3 * r3) - (r4 * r4) + (x4 * x4)) / A;
-        double exactY = ((r3 * r3) - (r1 * r1) + (y1 * y1)) / B;
-        
-        // حساب عمق المخرج الفراغي (Z) مع جدار حماية لمنع الجذور السالبة الناتجة عن التشويش
-        double zSquared = (r3 * r3) - (exactX * exactX) - (exactY * exactY);
-        double exactZ = (zSquared > 0.00001) ? sqrt(zSquared) : 0.0; 
-
-        // تصنيف طوبوغرافي نقي لمخرج المقطع اللفظي بناءً على دقة الإحداثيات الفراغية
-        String zone = "UNKNOWN";
-        if (exactY > 45.0 && exactZ < 15.0) zone = "LIPS";             // الشفاه الأمامية الخارجية
-        else if (exactY > 20.0 && exactY <= 45.0 && exactZ < 25.0) zone = "DENTAL"; // منطقة الأسنان وطرف اللسان
-        else if (exactY <= 20.0 && exactZ >= 25.0 && exactZ < 45.0) zone = "MID_MOUTH"; // تجويف وسط الحنك
-        else if (exactZ >= 45.0) zone = "THROAT";                      // عمق البلعوم والحنجرة سحيق البعد
-
-        // بناء حزمة النص الموحدة المعايرة بأعلى حماية فيزيائية: (X, Y, Z, ZONE)
-        String payload = String(exactX, 1) + "," + String(exactY, 1) + "," + String(exactZ, 1) + "," + zone;
-        
-        // بث الحزمة الآمنة لاسلكياً عبر البلوتوث إلى الكمبيوتر/الهاتف
-        coordinateDataCharacteristic.writeValue(payload);
-      }
-
-      // منع ارتداد الأمواج الصوتية المنعكسة داخل الخوذة
-      delay(150); 
-      
-      // تصفير منظم ومحمي ضد السباق الحسابي (Anti-Race Condition Gating)
-      noInterrupts();
-      t1 = 0; t2 = 0; t3 = 0; t4 = 0;
-      interrupts();
+        double rawX, rawY, rawZ;
+        if (computePosition(dR1, dR2, dR4, rawX, rawY, rawZ)) {
+            // تطبيق فلتر كالمان ثلاثي الأبعاد
+            double z[3] = {rawX, rawY, rawZ};
+            kalmanFilter3D(z);
+            
+            // تصنيف المنطقة
+            String zone = (X[2] < 15.0) ? "LIPS" : ((X[2] < 35.0) ? "PALATE" : "THROAT");
+            String payload = String(X[0], 1) + "," + String(X[1], 1) + "," + String(X[2], 1) + "," + zone;
+            xyzCharacteristic.writeValue(payload.c_str());
+        }
     }
-  }
 }
-
-// دالات المقاطعة فائقة السرعة بالمايكروثانية مع حصار الفترات الزمنية لمنع التداخل
-void ISR_M1() { if (t1 == 0 && (micros() - lastTriggerTime > DEBOUNCE_DELAY)) t1 = micros(); }
-void ISR_M2() { if (t2 == 0 && (micros() - lastTriggerTime > DEBOUNCE_DELAY)) t2 = micros(); }
-void ISR_M3() { if (t3 == 0 && (micros() - lastTriggerTime > DEBOUNCE_DELAY)) t3 = micros(); }
-void ISR_M4() { if (t4 == 0 && (micros() - lastTriggerTime > DEBOUNCE_DELAY)) t4 = micros(); }
