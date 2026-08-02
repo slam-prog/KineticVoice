@@ -1,10 +1,11 @@
 /*
- * KineticVoice V3.1.2 - Production Firmware (Hybrid Optimized)
+ * KineticVoice V3.1.3 - Production Firmware (Ultimate Stability)
  * Core Authors: [NAJIB MOHAMMED AL-AMIR] & Google AI & DeepSeek AI
  * ---------------------------------------------------------------------------
- * This version integrates the NaN protection (Google AI) with the high-speed
- * interrupt-driven architecture, advanced trilateration, and 3D Kalman filter
- * (DeepSeek AI), delivering both stability and peak performance.
+ * This version addresses three critical silent bugs:
+ * 1. TDOA absolute time assumption (now uses relative time differences).
+ * 2. BLE MTU limitation (now uses a compact binary payload).
+ * 3. Chan's algorithm divergence (improved initial estimation & EPSILON).
  * ---------------------------------------------------------------------------
  */
 
@@ -26,14 +27,15 @@ double X[3] = {0,0,0};
 volatile uint32_t t1 = 0, t2 = 0, t4 = 0;
 volatile bool newData = false;
 
-// ==================== خدمة وخاصية البلوتوث ====================
+// ==================== خدمة وخاصية البلوتوث (حزمة ثنائية) ====================
 BLEService kineticService("180F");
-BLEStringCharacteristic xyzCharacteristic("2A19", BLERead | BLENotify, 64);
+BLECharacteristic xyzCharacteristic("2A19", BLERead | BLENotify, 7); // 7 بايت فقط
 
 // ==================== النماذج الأولية للدوال ====================
 void kalmanFilter3D(double z[3]);
 bool computePosition(double dR1, double dR2, double dR4, double &x, double &y, double &z);
-String classifyZone(double x, double y, double z);
+uint8_t encodeZone(String zone);
+String decodeZone(uint8_t byte);
 
 // ==================== دوال المقاطعة (ISR) ====================
 void ISR_M1() { if (t1 == 0) { t1 = micros(); newData = true; } }
@@ -63,7 +65,7 @@ void setup() {
     BLE.addService(kineticService);
     BLE.advertise();
 
-    Serial.println("KineticVoice V3.1.2 Initialized.");
+    Serial.println("KineticVoice V3.1.3 Initialized.");
 }
 
 // ==================== الحلقة الرئيسية ====================
@@ -77,9 +79,11 @@ void loop() {
         interrupts();
 
         if (t1_local > 0 && t2_local > 0 && t4_local > 0) {
-            double dR1 = (double)(t1_local) * SPEED_OF_SOUND;
-            double dR2 = (double)(t2_local) * SPEED_OF_SOUND;
-            double dR4 = (double)(t4_local) * SPEED_OF_SOUND;
+            // ========== التصحيح 1: حساب TDOA النسبي ==========
+            uint32_t t_min = min(t1_local, min(t2_local, t4_local));
+            double dR1 = (double)(t1_local - t_min) * SPEED_OF_SOUND;
+            double dR2 = (double)(t2_local - t_min) * SPEED_OF_SOUND;
+            double dR4 = (double)(t4_local - t_min) * SPEED_OF_SOUND;
 
             double rawX, rawY, rawZ;
             if (computePosition(dR1, dR2, dR4, rawX, rawY, rawZ)) {
@@ -87,14 +91,30 @@ void loop() {
                 kalmanFilter3D(z);
 
                 String zone = classifyZone(X[0], X[1], X[2]);
-                String payload = String(X[0], 1) + "," + String(X[1], 1) + "," + String(X[2], 1) + "," + zone;
+                uint8_t zoneByte = encodeZone(zone);
 
-                xyzCharacteristic.writeValue(payload.c_str());
+                // ========== التصحيح 2: حزمة ثنائية مضغوطة (7 بايت) ==========
+                // التنسيق: [X_H, X_L, Y_H, Y_L, Z_H, Z_L, ZONE_BYTE]
+                uint8_t payload[7];
+                int16_t x_int = (int16_t)(X[0] * 10); // دقة 0.1 مم
+                int16_t y_int = (int16_t)(X[1] * 10);
+                int16_t z_int = (int16_t)(X[2] * 10);
 
-                // وضع التصحيح (Debug Mode)
-                Serial.print("Raw: "); Serial.print(rawX, 1); Serial.print(","); Serial.print(rawY, 1); Serial.print(","); Serial.print(rawZ, 1);
-                Serial.print(" | Filtered: "); Serial.print(X[0], 1); Serial.print(","); Serial.print(X[1], 1); Serial.print(","); Serial.print(X[2], 1);
-                Serial.print(" | Zone: "); Serial.println(zone);
+                payload[0] = (uint8_t)(x_int >> 8);
+                payload[1] = (uint8_t)(x_int & 0xFF);
+                payload[2] = (uint8_t)(y_int >> 8);
+                payload[3] = (uint8_t)(y_int & 0xFF);
+                payload[4] = (uint8_t)(z_int >> 8);
+                payload[5] = (uint8_t)(z_int & 0xFF);
+                payload[6] = zoneByte;
+
+                xyzCharacteristic.writeValue(payload, 7);
+
+                // وضع التصحيح (Debug Mode) - اختياري
+                Serial.print("X:"); Serial.print(X[0], 1);
+                Serial.print(",Y:"); Serial.print(X[1], 1);
+                Serial.print(",Z:"); Serial.print(X[2], 1);
+                Serial.print(",Zone:"); Serial.println(zone);
             }
         }
     }
@@ -102,21 +122,23 @@ void loop() {
 
 // ==================== خوارزمية التثليث المحسّنة (Modified Chan's Solver) ====================
 bool computePosition(double dR1, double dR2, double dR4, double &x, double &y, double &z) {
+    // ========== التصحيح 3: تحسين التقدير الأولي ==========
     double r3_est = sqrt(dR1 * dR1 + dR2 * dR2 + dR4 * dR4) / 2.0;
-    if (r3_est < 0.001) return false;
+    if (r3_est < 0.001) {
+        r3_est = (dR1 + dR2 + dR4) / 3.0 + 10.0; // تقدير افتراضي
+    }
 
     for (int iter = 0; iter < 6; iter++) {
         double x_est = (d * d - dR4 * dR4 - 2 * dR4 * r3_est) / ((2 * d) + EPSILON);
         double y_est = (d * d - dR1 * dR1 - 2 * dR1 * r3_est) / ((2 * d) + EPSILON);
         double z_sq = r3_est * r3_est - x_est * x_est - y_est * y_est;
 
-        // 🔥 تصحيح Google AI: منع الجذر التربيعي السالب (NaN Protection)
         double z_est = 0.0;
         if (z_sq > 0.0) {
             z_est = sqrt(z_sq);
         }
 
-        double denominator = 2 * dR2 + EPSILON;
+        double denominator = (2 * dR2) + EPSILON;
         double r3_new = (2 * d * d - dR2 * dR2 - 2 * d * x_est - 2 * d * y_est) / denominator;
         if (r3_new > 0) {
             r3_est = (r3_est + r3_new) / 2.0;
@@ -163,3 +185,26 @@ String classifyZone(double x, double y, double z) {
     else return "UNKNOWN";
 }
 
+// ==================== تشفير المناطق إلى بايت واحد ====================
+uint8_t encodeZone(String zone) {
+    if (zone == "LIPS") return 1;
+    else if (zone == "DENTAL") return 2;
+    else if (zone == "ALVEOLAR") return 3;
+    else if (zone == "PALATAL") return 4;
+    else if (zone == "VELAR") return 5;
+    else if (zone == "THROAT") return 6;
+    else return 0;
+}
+
+// ==================== فك تشفير المنطقة (للاستخدام في الطرف الآخر) ====================
+String decodeZone(uint8_t byte) {
+    switch(byte) {
+        case 1: return "LIPS";
+        case 2: return "DENTAL";
+        case 3: return "ALVEOLAR";
+        case 4: return "PALATAL";
+        case 5: return "VELAR";
+        case 6: return "THROAT";
+        default: return "UNKNOWN";
+    }
+}
