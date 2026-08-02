@@ -1,4 +1,11 @@
 /*
+ * ⚕️ MEDICAL DISCLAIMER:
+ * This software is part of a research platform and is NOT a certified medical device.
+ * It should not be used for diagnostic or therapeutic purposes without professional supervision.
+ * See DISCLAIMER.md for full terms.
+ */
+
+/*
  * KineticVoice V3.1.3 - Production Firmware (Ultimate Stability)
  * Core Authors: [NAJIB MOHAMMED AL-AMIR] & Google AI & DeepSeek AI
  * ---------------------------------------------------------------------------
