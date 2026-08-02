@@ -30,7 +30,11 @@
 - **ذكاء ديب سيك**: هندسة التحميل الهجين لـ TDOA، فلتر كالمان ثلاثي الأبعاد، واجهات المطورين متعددة المنصات.
 
 ---
+## ⚕️ Medical & Technical Disclaimer
 
+**English**: KineticVoice is a research-oriented embedded platform for 3D spatial speech tracking and IoT applications. Although it incorporates anatomical mapping for phoneme detection, it is **not** a certified medical diagnostic device and should not replace professional medical advice, diagnosis, or treatment. Always consult with licensed healthcare providers for speech-related conditions.
+
+**عربي**: نظام KineticVoice هو منصة هندسية بحثية مدمجة لتتبع الصوت الفراغي وتطبيقات إنترنت الأشياء. على الرغم من دمج الخرائط التشريحية للنطق، إلا أن هذا النظام **لا يمثل** أداة طبية تشخيصية معتمدة، ولا يغني عن استشارة المختصين والأطباء المرخصين في تقييم أو علاج اضطرابات النطق.
 ## 📐 3D Geometrical Framework
 
 The microphone array forms a rigid 60mm × 60mm plane. Positions relative to **Mic 3 (0,0,0)**:
