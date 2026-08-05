@@ -16,11 +16,11 @@
 - لغة Python (لتطوير أدوات التكامل).
 
 ---
+## 2. هيكل المشروع (Project Structure)
 
-Project Structure
+يتبع المستودع الهيكل التالي (يُفضل عرض هذا القسم في وضع `raw` أو `plaintext` داخل GitHub):
 
-## 2. هيكل المشروع 
-
+```plaintext
 KineticVoice/
 ├── firmware/
 │   └── kinetic_vocal_core.ino          # الكود الأساسي للنظام (v3.1.3)
@@ -42,7 +42,7 @@ KineticVoice/
 │   └── housing.stl
 ├── README.md
 ├── USER_MANUAL.md
-├── DEVELOPER_GUIDE.md                  # (slam-prog)
+├── DEVELOPER_GUIDE.md                 
 ├── CONTRIBUTING.md
 ├── LICENSE
 └── ...
