@@ -17,13 +17,10 @@
 
 ---
 
-## 2. هيكل المشروع (Project Structure)
+Project Structure
 
-## 2. هيكل المشروع (Project Structure)
+## 2. هيكل المشروع 
 
-يتبع المستودع الهيكل التالي (يُفضل عرض هذا القسم في وضع `raw` أو `plaintext` داخل GitHub):
-
-```plaintext
 KineticVoice/
 ├── firmware/
 │   └── kinetic_vocal_core.ino          # الكود الأساسي للنظام (v3.1.3)
