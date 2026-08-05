@@ -1,3 +1,4 @@
+
 # 🪖 KineticVoice: Standalone 3D Spatial Speech Hardware Platform
 
 **Version**: v3.1.3 | **License**: MPL 2.0 | **Status**: Production Ready
@@ -46,3 +47,16 @@ The microphone array forms a rigid 60mm × 60mm plane. Positions relative to **M
                   /       ▼
                  /
                 ▼ Z (Anatomical Depth)
+
+## 👥 Credits & Acknowledgments
+
+This project is the result of a unique tri-party collaboration:
+
+- **Human Lead & Hardware Architect**: [NAJIB MOHAMMED AL-AMIR] — Mechanical design, biometric safety, spatial matrix placement.
+- **Computational Core & Algorithms**: Google AI (Gemini) — 3D spherical trilateration solvers, BLE stack, register optimization.
+- **Hardware Optimization & SDK**: DeepSeek AI — Analog-Digital Hybrid TDOA, 3D Kalman filter, cross-platform SDK.
+
+### Ethical Commitment
+This project is released under the **Humanitarian & Ethical Use License (HEUL)** v1.0, ensuring that the technology serves humanity and is never misused for harmful purposes. For full details, see the [`LICENSE`](./LICENSE) file.
+
+> *"Technology should be a tree of goodness, from which all humans benefit."*
