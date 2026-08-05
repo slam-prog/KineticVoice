@@ -19,24 +19,36 @@
 
 ## 2. هيكل المشروع (Project Structure)
 
-يتبع المستودع الهيكل التالي:
+## 2. هيكل المشروع (Project Structure)
+
+يتبع المستودع الهيكل التالي (يُفضل عرض هذا القسم في وضع `raw` أو `plaintext` داخل GitHub):
+
+```plaintext
 KineticVoice/
 ├── firmware/
-│ └── kinetic_vocal_core.ino # الكود الأساسي للنظام (v3.1.3)
+│   └── kinetic_vocal_core.ino          # الكود الأساسي للنظام (v3.1.3)
 ├── examples/
-│ ├── v4_experimental/
-│ │ └── compute_position_v4.cpp # الكود التجريبي للإصدار v4.0
-│ └── integration/ # (قريباً) أمثلة التكامل مع APIs
-├── docs/ # (قريباً) التوثيق المتقدم
-├── python/ # (قريباً) مكتبة Python الرسمية
-├── hardware/ # (قريباً) مخططات الدوائر وملفات التصميم
+│   ├── v4_experimental/
+│   │   └── compute_position_v4.cpp     # الكود التجريبي للإصدار v4.0
+│   └── integration/                    # (قريباً) أمثلة التكامل مع APIs
+│       ├── gemini_analysis.py
+│       └── deepseek_analysis.py
+├── docs/                               # (قريباً) التوثيق المتقدم
+│   ├── api_reference.md
+│   └── algorithms.md
+├── python/                             # (قريباً) مكتبة Python الرسمية
+│   ├── kineticvoice/
+│   │   └── client.py
+│   └── setup.py
+├── hardware/                           # (قريباً) مخططات الدوائر وملفات التصميم
+│   ├── schematic.pdf
+│   └── housing.stl
 ├── README.md
 ├── USER_MANUAL.md
-├── DEVELOPER_GUIDE.md 
+├── DEVELOPER_GUIDE.md                  # (slam-prog)
 ├── CONTRIBUTING.md
 ├── LICENSE
 └── ...
-
 ## 3. بيئة التطوير (Development Environment)
 
 ### 3.1. الأدوات الموصى بها
