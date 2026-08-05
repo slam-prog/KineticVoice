@@ -26,3 +26,16 @@
 1. **تثبيت المكتبات**:
    ```bash
    pip install -r requirements.txt
+تشغيل مثال Python:
+
+bash
+python gemini_analysis.py
+أو:
+
+bash
+python deepseek_analysis.py
+تشغيل واجهة الويب:
+
+افتح ملف web_ble_dashboard.html في متصفح حديث (يدعم Web Bluetooth).
+
+اضغط على زر "Connect" واختر جهاز KineticVoiceCore.
