@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KineticVoice - BLE Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; direction: rtl; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        button { padding: 12px 24px; font-size: 18px; margin: 10px; border: none; border-radius: 8px; cursor: pointer; }
+        #connectBtn { background: #4CAF50; color: white; }
+        #disconnectBtn { background: #f44336; color: white; }
+        #dataDisplay { background: #eee; padding: 15px; border-radius: 8px; margin-top: 15px; font-size: 18px; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; color: white; font-weight: bold; }
+        .badge.LIPS { background: #FF9800; }
+        .badge.DENTAL { background: #2196F3; }
+        .badge.ALVEOLAR { background: #9C27B0; }
+        .badge.PALATAL { background: #009688; }
+        .badge.VELAR { background: #795548; }
+        .badge.THROAT { background: #607D8B; }
+        .badge.UNKNOWN { background: #9E9E9E; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🎤 KineticVoice Dashboard</h1>
+    <div>
+        <button id="connectBtn">🔗 اتصال</button>
+        <button id="disconnectBtn" disabled>🔌 قطع الاتصال</button>
+    </div>
+    <div id="status">⏳ جاهز للاتصال...</div>
+    <div id="dataDisplay">
+        <p>📊 X: <span id="xVal">--</span> mm</p>
+        <p>📊 Y: <span id="yVal">--</span> mm</p>
+        <p>📊 Z: <span id="zVal">--</span> mm</p>
+        <p>📍 المنطقة: <span id="zoneVal" class="badge">--</span></p>
+    </div>
+</div>
+
+<script>
+    const SERVICE_UUID = '180F';
+    const CHARACTERISTIC_UUID = '2A19';
+    const DEVICE_NAME = 'KineticVoiceCore';
+
+    let device = null;
+    let characteristic = null;
+
+    const connectBtn = document.getElementById('connectBtn');
+    const disconnectBtn = document.getElementById('disconnectBtn');
+    const statusDiv = document.getElementById('status');
+    const xVal = document.getElementById('xVal');
+    const yVal = document.getElementById('yVal');
+    const zVal = document.getElementById('zVal');
+    const zoneVal = document.getElementById('zoneVal');
+
+    function updateStatus(msg) {
+        statusDiv.innerText = msg;
+    }
+
+    function updateData(x, y, z, zone) {
+        xVal.innerText = x;
+        yVal.innerText = y;
+        zVal.innerText = z;
+        zoneVal.innerText = zone;
+        zoneVal.className = 'badge ' + zone;
+    }
+
+    async function connect() {
+        try {
+            updateStatus('🔍 جاري البحث عن الجهاز...');
+            device = await navigator.bluetooth.requestDevice({
+                filters: [{ name: DEVICE_NAME }],
+                optionalServices: [SERVICE_UUID]
+            });
+
+            updateStatus('🔗 جاري الاتصال...');
+            const server = await device.gatt.connect();
+
+            updateStatus('📡 جاري العثور على الخدمة...');
+            const service = await server.getPrimaryService(SERVICE_UUID);
+
+            updateStatus('📡 جاري العثور على الخاصية...');
+            characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+            await characteristic.startNotifications();
+            characteristic.addEventListener('characteristicvaluechanged', handleNotification);
+
+            connectBtn.disabled = true;
+            disconnectBtn.disabled = false;
+            updateStatus('✅ متصل بنجاح!');
+
+        } catch (error) {
+            updateStatus('❌ خطأ: ' + error.message);
+            console.error(error);
+        }
+    }
+
+    function handleNotification(event) {
+        const value = event.target.value;
+        const decoder = new TextDecoder('utf-8');
+        const dataStr = decoder.decode(value).trim();
+        const parts = dataStr.split(',');
+
+        if (parts.length === 4) {
+            const x = parseFloat(parts[0]);
+            const y = parseFloat(parts[1]);
+            const z = parseFloat(parts[2]);
+            const zone = parts[3];
+            updateData(x.toFixed(1), y.toFixed(1), z.toFixed(1), zone);
+        } else {
+            console.warn('⚠️ Unexpected data format:', dataStr);
+        }
+    }
+
+    async function disconnect() {
+        if (device && device.gatt) {
+            try {
+                await device.gatt.disconnect();
+            } catch (e) {
+                console.warn('Error during disconnect:', e);
+            }
+        }
+        device = null;
+        characteristic = null;
+        connectBtn.disabled = false;
+        disconnectBtn.disabled = true;
+        updateStatus('⏳ جاهز للاتصال...');
+        updateData('--', '--', '--', '--');
+    }
+
+    connectBtn.addEventListener('click', connect);
+    disconnectBtn.addEventListener('click', disconnect);
+</script>
+
+</body>
+</html>
