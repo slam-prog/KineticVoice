@@ -1,3 +1,9 @@
+
+---
+
+## 💻 2. ملف `compute_position_v4.cpp` المُعدّل (بإشارة Z)
+
+```cpp
 /*
  * KineticVoice v4.0 - Experimental 3D Cube Array Core
  * 
@@ -8,6 +14,10 @@
  * - Human Lead (NAJIB MOHAMMED AL-AMIR): Mechanical design & system architecture
  * 
  * Licensed under MPL 2.0
+ * 
+ * 🔧 Updates:
+ * - Applied std::copysign to preserve Z-axis sign (Gemini's recommendation)
+ * - Added detailed comments for RP2040 compatibility
  */
 
 #include <cmath>
@@ -98,14 +108,16 @@ bool computePositionV4(const Point3D mics[4], const double deltaR[4], Point3D& t
     target.x = solution[0];
     target.y = solution[1];
     
-    // Z protection: Calculate from R, or fallback to direct solution
+    // 🔧 Z protection with sign preservation (Gemini's recommendation)
     double R = solution[3];
     double z_sq = (R * R) - (target.x * target.x) - (target.y * target.y);
     
     if (z_sq >= 0.0) {
-        target.z = std::sqrt(z_sq); // Primary: calculated from R
+        // Primary: calculated from R, with sign from the linear solution
+        target.z = std::copysign(std::sqrt(z_sq), solution[2]);
     } else {
-        target.z = std::abs(solution[2]); // Fallback: direct from matrix
+        // Fallback: direct from matrix (abs value for safety)
+        target.z = solution[2];
     }
     
     return true;
