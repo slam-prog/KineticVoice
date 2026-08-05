@@ -32,7 +32,7 @@ KineticVoice/
 ├── hardware/ # (قريباً) مخططات الدوائر وملفات التصميم
 ├── README.md
 ├── USER_MANUAL.md
-├── DEVELOPER_GUIDE.md # (أنت هنا)
+├── DEVELOPER_GUIDE.md 
 ├── CONTRIBUTING.md
 ├── LICENSE
 └── ...
