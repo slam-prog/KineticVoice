@@ -175,9 +175,7 @@ python/: مكتبة Python لقراءة البيانات من الجهاز.
 
 الكادر البشري (المهندس نجيب محمد الأمير): التصميم الميكانيكي، الهيكل الفيزيائي، وإدارة المشروع.
 
-Google AI (جيمني): النواة الحسابية، الخوارزميات الرياضية، وتحسين الأداء.
-
-DeepSeek AI: تحسين العتاد، الدوائر الهجينة، وتطوير واجهات المطورين (SDK).
+"AI Assistance & Technical Support: Special thanks to Google Gemini and DeepSeek AI models for providing technical consultations, optimizing the mathematical algorithms, and helping structure the firmware architecture for both v3.1.3 and v4.0."
 
 🚀 أمثلة التكامل العملي
 مع Google AI (Gemini API)
