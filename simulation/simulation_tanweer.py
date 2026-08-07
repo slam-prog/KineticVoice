@@ -1,3 +1,18 @@
+"""
+==================================================================
+Tanweer Algorithm - 3D Acoustic Localization Simulation
+==================================================================
+Co-developed with DeepSeek AI.
+
+Key contributions:
+- L2 normalization for gain-invariance.
+- Circular shift + subtraction for TDOA estimation.
+- Integration with ASR simulation layer.
+
+Author: DeepSeek AI (Technical Assistant)
+License: HEUL v1.0
+==================================================================
+"""
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import least_squares
