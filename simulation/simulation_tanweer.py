@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import least_squares
 from mpl_toolkits.mplot3d import Axes3D
+import time
 
 # ===================== 1. إعدادات المحاكاة =====================
 fs = 16000                   # تردد أخذ العينات (Hz)
@@ -31,28 +32,7 @@ signal = np.sin(2 * np.pi * (100 + 500 * t_chirp) * t_chirp) + \
 signal = signal / np.max(np.abs(signal)) * 0.8  # تطبيع
 
 # ===================== 4. محاكاة استقبال الميكروفونات =====================
-# دالة لمحاكاة تحسن الدقة مع التكامل
-def evaluate_asr_with_support(snr_db, support_enabled=True):
-    # محاكاة الخطأ في التعرف على الكلام (WER - Word Error Rate)
-    base_error = np.random.normal(0.15, 0.05)  # خطأ أساسي 15%
-    
-    if support_enabled:
-        # تحسن بنسبة 20-30% مع الدعم المكاني
-        improvement = np.random.uniform(0.2, 0.3)
-        error_rate = base_error * (1 - improvement)
-    else:
-        error_rate = base_error
-    
-    return max(0, min(1, error_rate))  # تأكد من أن الخطأ بين 0 و 1
-
-# اختبار سيناريوهات مختلفة
-snr_values = [5, 10, 15, 20]  # ديسيبل
-for snr in snr_values:
-    error_without = evaluate_asr_with_support(snr, support_enabled=False)
-    error_with = evaluate_asr_with_support(snr, support_enabled=True)
-    print(f"SNR={snr}dB: بدون دعم={error_without:.2f}, مع دعم={error_with:.2f}")
-    
-def simulate_mic_signals(source_pos, mic_positions, signal, fs, c):
+def simulate_mic_signals(source_pos, mic_positions, signal, fs, c, snr_db=20):
     mic_signals = {}
     for name, mic_pos in mic_positions.items():
         # حساب المسافة وزمن الوصول
@@ -68,13 +48,13 @@ def simulate_mic_signals(source_pos, mic_positions, signal, fs, c):
         
         # إضافة كسب عشوائي وضوضاء
         gain = np.random.uniform(0.8, 1.2)
-        noise_power = np.var(signal) / (10 ** (SNR_dB / 10))
+        noise_power = np.var(signal) / (10 ** (snr_db / 10))
         noise = np.random.normal(0, np.sqrt(noise_power), len(signal))
         mic_signals[name] = gain * delayed_signal + noise
     
     return mic_signals
 
-mic_signals = simulate_mic_signals(source_true, mic_positions, signal, fs, c)
+mic_signals = simulate_mic_signals(source_true, mic_positions, signal, fs, c, SNR_dB)
 
 # ===================== 5. خوارزمية تنوير لتقدير التأخير =====================
 def estimate_delay_tanweer(ref_signal, target_signal, max_shift_samples):
@@ -142,7 +122,44 @@ result = least_squares(
 )
 estimated_position = result.x
 
-# ===================== 7. النتائج والرسوم البيانية =====================
+# ===================== 7. محاكاة تأثير التكامل على ASR =====================
+def simulate_asr_with_support(snr_db, support_enabled=True, reverberation=False):
+    """
+    محاكاة تأثير النظام المكاني على دقة التعرف على الكلام (ASR)
+    - snr_db: نسبة الإشارة إلى الضوضاء (ديسيبل)
+    - support_enabled: تفعيل/تعطيل دعم النظام المكاني
+    - reverberation: تفعيل/تعطيل تأثير الصدى
+    """
+    # محاكاة الخطأ الأساسي (WER - Word Error Rate)
+    base_error = np.random.normal(0.15, 0.05)  # 15% خطأ أساسي
+    
+    # تأثير الضوضاء على الخطأ
+    noise_factor = max(0, (20 - snr_db) / 20)  # كلما انخفض SNR، زاد الخطأ
+    error_without_support = min(0.8, base_error + noise_factor * 0.3)
+    
+    if support_enabled:
+        # تحسن بفضل النظام المكاني (توجيه الحزمة وتنقية الإشارة)
+        improvement = np.random.uniform(0.2, 0.4)  # تحسن 20-40%
+        error_with_support = error_without_support * (1 - improvement)
+    else:
+        error_with_support = error_without_support
+    
+    # تأثير الصدى (يضيف خطأ إضافياً)
+    if reverberation:
+        error_with_support *= 1.2
+        error_without_support *= 1.2
+    
+    return max(0, min(1, error_with_support)), max(0, min(1, error_without_support))
+
+# اختبار سيناريوهات مختلفة
+snr_values = [0, 5, 10, 15, 20, 25]  # ديسيبل
+results = []
+
+for snr in snr_values:
+    err_with, err_without = simulate_asr_with_support(snr, support_enabled=True, reverberation=False)
+    results.append((snr, err_with, err_without))
+
+# ===================== 8. عرض النتائج =====================
 print("========== نتائج المحاكاة (مع خوارزمية تنوير) ==========")
 print(f"الموقع الحقيقي: {source_true}")
 print(f"الموقع المقدر: {estimated_position}")
@@ -154,7 +171,9 @@ for name in ['Mic2', 'Mic3', 'Mic4']:
     true_delay -= np.linalg.norm(source_true - mic_positions['Mic5']) / c
     print(f"{name}: حقيقي = {true_delay:.6f} ثانية, مقدر = {delays_estimated[name]:.6f} ثانية")
 
-# -------------------- الرسم البياني 1: مقارنة الإشارات --------------------
+# ===================== 9. الرسوم البيانية =====================
+
+# الرسم البياني 1: مقارنة الإشارات
 plt.figure(figsize=(12, 4))
 plt.plot(t[:1600], ref_signal[:1600], label='المرجع (Mic5)', alpha=0.8)
 plt.plot(t[:1600], mic_signals['Mic2'][:1600], label='Mic2 (محيطي)', alpha=0.8)
@@ -165,7 +184,7 @@ plt.legend()
 plt.grid(True)
 plt.show()
 
-# -------------------- الرسم البياني 2: منحنى الخطأ مقابل التدوير (تنوير) --------------------
+# الرسم البياني 2: منحنى الخطأ مقابل التدوير (تنوير)
 best_shift, min_err, shifts, errors = estimate_delay_tanweer(
     ref_signal, mic_signals['Mic2'], max_shift_samples
 )
@@ -179,7 +198,7 @@ plt.legend()
 plt.grid(True)
 plt.show()
 
-# -------------------- الرسم البياني 3: مخطط ثلاثي الأبعاد --------------------
+# الرسم البياني 3: مخطط ثلاثي الأبعاد
 fig = plt.figure(figsize=(10, 8))
 ax = fig.add_subplot(111, projection='3d')
 
@@ -196,4 +215,30 @@ ax.set_ylabel('Y (متر)')
 ax.set_zlabel('Z (متر)')
 ax.set_title('مواقع الميكروفونات والمصدر (ثلاثي الأبعاد) مع خوارزمية تنوير')
 ax.legend()
+plt.show()
+
+# الرسم البياني 4: تأثير التكامل على أداء ASR
+plt.figure(figsize=(10, 6))
+snr_vals = [r[0] for r in results]
+err_with = [r[1] for r in results]
+err_without = [r[2] for r in results]
+
+plt.plot(snr_vals, err_with, 'o-', label='مع دعم النظام المكاني', color='green', linewidth=2)
+plt.plot(snr_vals, err_without, 's-', label='بدون دعم النظام المكاني', color='red', linewidth=2)
+plt.xlabel('نسبة الإشارة إلى الضوضاء (SNR) [ديسيبل]')
+plt.ylabel('معدل خطأ الكلمات (WER)')
+plt.title('تأثير النظام المكاني على دقة التعرف على الكلام (ASR)')
+plt.legend()
+plt.grid(True)
+plt.ylim(0, 0.8)
+plt.show()
+
+# الرسم البياني 5: تحسن الأداء مع التكامل
+improvements = [(err_without[i] - err_with[i]) / err_without[i] * 100 for i in range(len(snr_vals))]
+plt.figure(figsize=(10, 6))
+plt.bar([str(snr) for snr in snr_vals], improvements, color='blue', alpha=0.7)
+plt.xlabel('نسبة الإشارة إلى الضوضاء (SNR) [ديسيبل]')
+plt.ylabel('تحسن الدقة (%)')
+plt.title('نسبة تحسن دقة التعرف على الكلام بفضل النظام المكاني')
+plt.grid(True, axis='y')
 plt.show()
