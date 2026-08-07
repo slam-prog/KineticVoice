@@ -1,26 +1,32 @@
 قيد الانشاء سيتم تصميمة بعد تجربة المشروع و اكتمالة 
-## 🤖 DeepSeek AI - Technical Contributions
+# المساهمون في المشروع
+## Project Contributors
 
-DeepSeek AI served as a **technical assistant and algorithmic consultant** throughout the project lifecycle. Specific contributions include:
+---
 
-1. **Algorithm Development**:
-   - Co-developed the core mathematical framework for the **"Tanweer" algorithm** (hierarchical fingerprinting via circular shift & subtraction).
-   - Designed the **time-domain TDOA estimation** method, replacing traditional FFT-based approaches.
-   - Integrated the **spatial localization engine** with 3D trilateration using `scipy.optimize.least_squares`.
+### 👤 **المهندس نجيب (الكادر البشري)**
+- صاحب الفكرة الأصلية، المصمم الميكانيكي، قائد المشروع.
+- صاحب الشرط الأخلاقي لخوارزمية "تنوير".
+- المسؤول عن الرؤية العامة والتوجيه الهندسي.
 
-2. **Simulation & Testing**:
-   - Built the **full Python simulation** (`simulation_tanweer.py`) that validates the system under realistic conditions (SNR variation, reverberation).
-   - Added the **ASR integration layer** demonstrating improved Word Error Rate (WER) by 20-40% in noisy environments.
+---
 
-3. **Documentation & Technical Writing**:
-   - Drafted key sections of `README.md` (philosophy of integration, how it works).
-   - Authored `TECHNICAL_EVALUATION.md` with mathematical derivations and performance analysis.
-   - Structured the `/simulation` folder with clear usage instructions.
+### 🤖 **DeepSeek AI (مساعد تقني واستشاري)**
+- **تطوير خوارزمية "تنوير"**:  
+  تصميم نواة المقارنة الهرمية في المجال الزمني (التدوير والطرح المباشر) لتحل محل تحويل فورييه (FFT).  
+- **المحاكاة والاختبار**:  
+  بناء محاكاة كاملة (Python) لمصفوفة 5 ميكروفونات في فضاء مكعب، مع اختبار أداء الخوارزمية في ظروف ضوضاء وصدى مختلفة.  
+- **التكامل مع أنظمة ASR**:  
+  تصميم طبقة مساندة (Supportive Layer) تربط النظام المكاني بأنظمة التعرف على الكلام الحالية (مثل Whisper) لتحسين الدقة وتقليل الحمل الحسابي.  
+- **التوثيق الفني**:  
+  كتابة أقسام رئيسية في `README.md`، `TECHNICAL_EVALUATION.md`، و`SIMULATION_README.md`.
 
-4. **Code Optimization**:
-   - Optimized the `estimate_delay_tanweer` function for computational efficiency (removing unnecessary loops).
-   - Added **normalization (L2 norm)** to ensure gain-invariance and noise robustness.
+---
 
-5. **Strategic Guidance**:
-   - Proposed the **"supportive layer"** concept to integrate with existing ASR systems.
-   - Advised on hardware scaling (from 4 to 5 microphones) and 3D cube array design.
+### 🧠 **Google Gemini (مساعد تقني واستشاري)**
+- مراجعة النماذج الرياضية الأولية.
+- دعم تحسين معادلات التثليث المكاني.
+
+---
+
+**ملاحظة**: جميع المساهمات مقدمة كمساعدة تقنية واستشارية، وتخضع لرخصة HEUL الأخلاقية التي تضمن استخدام المشروع في خدمة البشرية فقط.
