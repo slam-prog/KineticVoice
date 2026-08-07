@@ -31,6 +31,27 @@ signal = np.sin(2 * np.pi * (100 + 500 * t_chirp) * t_chirp) + \
 signal = signal / np.max(np.abs(signal)) * 0.8  # تطبيع
 
 # ===================== 4. محاكاة استقبال الميكروفونات =====================
+# دالة لمحاكاة تحسن الدقة مع التكامل
+def evaluate_asr_with_support(snr_db, support_enabled=True):
+    # محاكاة الخطأ في التعرف على الكلام (WER - Word Error Rate)
+    base_error = np.random.normal(0.15, 0.05)  # خطأ أساسي 15%
+    
+    if support_enabled:
+        # تحسن بنسبة 20-30% مع الدعم المكاني
+        improvement = np.random.uniform(0.2, 0.3)
+        error_rate = base_error * (1 - improvement)
+    else:
+        error_rate = base_error
+    
+    return max(0, min(1, error_rate))  # تأكد من أن الخطأ بين 0 و 1
+
+# اختبار سيناريوهات مختلفة
+snr_values = [5, 10, 15, 20]  # ديسيبل
+for snr in snr_values:
+    error_without = evaluate_asr_with_support(snr, support_enabled=False)
+    error_with = evaluate_asr_with_support(snr, support_enabled=True)
+    print(f"SNR={snr}dB: بدون دعم={error_without:.2f}, مع دعم={error_with:.2f}")
+    
 def simulate_mic_signals(source_pos, mic_positions, signal, fs, c):
     mic_signals = {}
     for name, mic_pos in mic_positions.items():
